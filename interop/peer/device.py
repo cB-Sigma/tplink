@@ -287,7 +287,15 @@ class CamState:
     def __init__(self, fixture):
         self.f = fixture
 
+    # Camera requests that act rather than set a recorded setting: shown
+    # to the test as they arrived, and answered as done.
+    ACTIONS = {"motorMove", "motorMoveToPreset", "addMotorPostion", "deletePreset", "relativeMove", "manualCalibrate",
+               "setSirenStatus", "rebootDevice", "formatSdCard", "searchDateWithVideo", "searchVideoWithUTC"}
+
     def one(self, method, params):
+        if method in self.ACTIONS:
+            say("camaction", {"method": method, "params": params})
+            return {"method": method, "error_code": 0, "result": {}}
         if method.startswith("set") and isinstance(self.f.get("get" + method[3:]), dict):
             for k, v in (params or {}).items():
                 self.f["get" + method[3:]].setdefault(k, {}).update(v)
@@ -299,6 +307,10 @@ class CamState:
     def handle(self, req):
         if req.get("method") == "multipleRequest":
             return {"error_code": 0, "result": {"responses": [self.one(r.get("method"), r.get("params")) for r in req["params"]["requests"]]}}
+        if req.get("method") in ("do", "set"):
+            # The single form ({"method": "do", "<module>": {...}}).
+            say("camsingle", req)
+            return {"error_code": 0}
         a = self.one(req.get("method"), req.get("params"))
         a.pop("method")
         return a

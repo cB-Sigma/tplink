@@ -60,6 +60,42 @@ History:
   code, effect table or default credential was taken from any of them.
   Running the new interop tests found that a Kasa camera nests its
   sysinfo once more, which the helpers now read.
+- 2026-10-12, v0.3.0: taporules.go, tapocamera.go, vacuum.go and ccm.go
+  were written for this module. Facts read (no code taken):
+  - Tapo schedule and countdown writes: the tapo Rust crate 0.11.1
+    (mihai-dinculescu/tapo, MIT): tapo/src/requests/schedule/raw.rs,
+    params.rs, timer.rs, tapo_request.rs and api/api_client.rs (method
+    names, the rule's fields and their fixed date values, week_day bits,
+    remove_all and rule_list, the one-countdown limit, error codes -1802,
+    -1803, -1805); plugp100 (GPL-3.0) plugp100/components/countdown.py
+    (add_countdown_rule's fields). Away-rule writes are in none of the
+    clients read.
+  - Cameras: python-kasa (GPL-3.0) master 38a3184 and 0.11.0.1
+    kasa/smartcam/modules/*.py, smartcamdevice.py, detectionmodule.py,
+    smartcammodule.py, protocols/smartcamprotocol.py and
+    devtools/helpers/smartcamrequests.py (getter and setter names,
+    modules and sections of the ten detections, lens mask, LED, siren,
+    presets, the single request form, time zone, getConnectionType,
+    scanApList); pytapo 3.4.26 (MIT, JurajNyiri/pytapo) pytapo/__init__.py
+    (motorMove, relativeMove, manualCalibrate, formatSdCard,
+    getSdCardStatus, rebootDevice, night vision and day/night requests,
+    the alarm set and manual alarm in the single form); the tapo crate
+    0.11.1 tapo/src/requests/smart_cam/*.rs and
+    responses/smart_cam/recordings_hub_result.rs (deletePreset,
+    searchDateWithVideo, searchVideoWithUTC and their answers). Answer
+    shapes from python-kasa's recorded smartcam fixtures.
+  - Robot vacuums: python-kasa (GPL-3.0) kasa/smart/modules/clean.py,
+    cleanrecords.py, consumables.py, dustbin.py, mop.py, speaker.py and
+    the RV30 Max(US) and RV20 Max Plus(EU) fixtures.
+  - AES-CCM (ccm.go): written from RFC 3610 and NIST SP 800-38C. It is
+    for the TPAP login, whose public descriptions (freeKC
+    tapo-v4-protocol PROTOCOL.md, MIT; pytapo 3.4.26's TPAP transport,
+    MIT; the tapo crate's tpap_protocol.rs, MIT; python-kasa pull request
+    #1592, GPL-3.0) were read on 2026-10-12; the login itself is not in
+    this release.
+  Running the new interop tests found that the simulator answered a
+  camera's siren with the module level where recorded devices do not;
+  the client reads both and the simulator was changed.
 
 ## Sources
 
@@ -76,6 +112,10 @@ History:
 | Kasa helpers (kasadevice.go) | none published | python-kasa (GPL-3.0) kasa/iot/*.py and kasa/iot/modules/*.py: module names per device type, statistics and rule methods and fields, dimmer methods, light-strip service and effect method, cloud and Wi-Fi methods; go-kasa (BSD-2-Clause): the count_down module name |
 | HTTPS transports (sslaes.go, linkie.go) | none published | python-kasa (GPL-3.0) kasa/transports/sslaestransport.py, ssltransport.py, linkietransport.py, klaptransport.py and kasa/protocols/smartcamprotocol.py: login steps, hashes, key and tag derivation, error codes, paths and ports, the Kasa camera form field |
 | Discovery decryption (tdp.go) | none published | python-kasa (GPL-3.0) kasa/discover.py and kasa/transports/aestransport.py: encrypt_info fields, RSA-OAEP with SHA-1, the AES-128-CBC data; the encrypt_type list |
+| Tapo rule writes (taporules.go) | none published | the tapo crate 0.11.1 (MIT) schedule and timer requests; plugp100 (GPL-3.0) countdown component |
+| Camera helpers (tapocamera.go) | none published | python-kasa (GPL-3.0) smartcam modules and fixtures; pytapo 3.4.26 (MIT); the tapo crate 0.11.1 (MIT) smart_cam requests and responses |
+| Robot vacuum helpers (vacuum.go) | none published | python-kasa (GPL-3.0) kasa/smart/modules clean, cleanrecords, consumables, dustbin, mop, speaker; RV30 and RV20 fixtures |
+| AES-CCM (ccm.go) | RFC 3610, NIST SP 800-38C | none |
 | Interop peer (interop/peer) | our own script and Dockerfile | python-kasa 0.11.0.1's transport classes and recorded fixtures, at test time |
 
 No specification or vendor text is reproduced.
@@ -113,6 +153,8 @@ record.
 | proto_test.go TestKelvinRanges | the kelvin.go table |
 | proto_test.go TestCredentialOrder | the order of the auth hashes and logins tried |
 | devices_test.go | fakes written for the tests; the expected requests follow the facts above |
+| ccm_test.go TestCCMVector | RFC 3610 packet vector #1 |
+| taporules_test.go, tapocamera_test.go, vacuum_test.go | fakes; the expected request shapes follow the facts above |
 | sslaes_test.go TestSSLAESVectors | values printed by python-kasa 0.11.0.1's SslAesTransport functions in the interop image for made-up inputs (the password "demo-password" and two fixed nonces) |
 | interop/ | python-kasa 0.11.0.1's code and fixtures, at test time |
 

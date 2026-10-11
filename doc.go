@@ -20,8 +20,13 @@
 // mode, dimmer transitions and fades, light state with transitions, light
 // strip effects, LED, name, reboot, cloud and firmware information, Wi-Fi
 // scan and join) and TapoDevice (lights, transitions, presets and effects,
-// energy use, history and readings, rule lists, auto-off, LED, firmware
-// update, Wi-Fi scan and set-up, hub sensors and button logs).
+// energy use, history and readings, schedules and countdowns read and
+// changed, auto-off, LED, firmware update, Wi-Fi scan and set-up, hub
+// sensors and button logs), TapoCamera (pan and tilt with presets,
+// privacy, status light, ten detection settings, siren and alarm, night
+// vision, clock, SD card, recordings list) and TapoVacuum (status,
+// cleaning, suction and water, consumables, records, maps and rooms,
+// dustbin, volume).
 //
 // It needs the owner's TP-Link account for KLAP and securePassthrough
 // devices (cameras: the device's local user), and no cloud connection. It

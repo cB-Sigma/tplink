@@ -3,6 +3,37 @@
 All notable changes to this module. Versions follow semantic versioning;
 before v1 the API may change in minor versions.
 
+## v0.3.0 (2026-10-11)
+
+Additions only; the v0.2.0 API is unchanged.
+
+- Tapo schedules and countdowns can be changed: `AddScheduleRule`,
+  `EditScheduleRule` (fields the client does not model are sent back as
+  read), `RemoveScheduleRules` (some or all), `AddCountdown`,
+  `ReplaceCountdown`, `RemoveCountdowns`; typed reading with
+  `ScheduleRules`, `CountdownRules`, `TapoScheduleRule`,
+  `ParseTapoScheduleRule` (also the older s_action form) and the weekday
+  constants. The requests follow the tapo crate 0.11.1 and plugp100.
+- `TapoCamera`: typed helpers for Tapo cameras and doorbells, or a camera
+  behind an H200 hub: information with battery, components, name, pan
+  and tilt, steps and calibration, saved positions, privacy, status
+  light, ten detection settings, last alarm, siren, alarm on detection
+  and manual alarm, night vision and day/night mode, clock and time zone
+  (`TimezoneOffset`), SD cards and formatting, recording days and clips,
+  connection, Wi-Fi scan, reboot. `CamSingle` sends the single request
+  form some camera requests need; `ErrNoSingleRequests` when the path
+  cannot. A camera that refuses motorMove is sent the single form.
+- `TapoVacuum`: typed helpers for Tapo robot vacuums on any transport:
+  status in one batch, start, rooms, pause, resume, return to dock,
+  suction, water level, pass count, consumables and reset, clean
+  records, maps and rooms, mop, dock emptying, volume and locate, carpet
+  boost, area unit.
+- Interop tests extended to cameras (C220, H200 siren) and robot
+  vacuums (RV30 Max) against python-kasa 0.11.0.1's fixtures; the peer
+  image is now tagged `sigma-tplink-interop:python-kasa-0.11.0.1-r3`.
+- Not in this release: the TPAP login. Its AES-CCM cipher is in place,
+  unexported (ccm.go, checked against RFC 3610).
+
 ## v0.2.0 (2026-10-11)
 
 Additions only; the v0.1.0 API is unchanged.

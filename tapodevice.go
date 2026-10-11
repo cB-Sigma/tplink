@@ -320,8 +320,9 @@ type TapoRules struct {
 }
 
 // Rules reads a rule list (get_schedule_rules paged, get_countdown_rules,
-// get_antitheft_rules). Changing Tapo rules is not offered (see the
-// README); Call reaches the device's own methods.
+// get_antitheft_rules). ScheduleRules and CountdownRules read them typed;
+// AddScheduleRule, EditScheduleRule, RemoveScheduleRules, AddCountdown and
+// RemoveCountdowns change them (taporules.go). Away rules are read only.
 func (d TapoDevice) Rules(ctx context.Context, kind TapoRuleKind) (TapoRules, error) {
 	method := "get_" + string(kind) + "_rules"
 	list, first, err := SmartList(ctx, d, method, "rule_list", nil)

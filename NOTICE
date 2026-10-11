@@ -32,7 +32,12 @@ module is a translation of it; only facts were used. Since v0.2.0 the
 fields of the Tapo energy history request were also read from
 fabiankachlock/tapo-api (MIT) and mihai-dinculescu/tapo (MIT), and the
 name of the Kasa countdown module confirmed in cloudkucooland/go-kasa
-(BSD-2-Clause), as facts only; no code was taken. See PROVENANCE.md.
+(BSD-2-Clause), as facts only; no code was taken. Since v0.3.0 the
+request names and fields of Tapo schedule and countdown writes and of
+camera requests were also read from mihai-dinculescu/tapo (MIT),
+JurajNyiri/pytapo (MIT) and petretiandrea/plugp100 (GPL-3.0), as facts
+only; no code was taken. The AES-CCM cipher follows RFC 3610. See
+PROVENANCE.md.
 
 Credentials
 -----------

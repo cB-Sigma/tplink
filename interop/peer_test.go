@@ -17,7 +17,7 @@ import (
 )
 
 // image is the reference peer's image, built from ./peer.
-const image = "sigma-tplink-interop:python-kasa-0.11.0.1-r2"
+const image = "sigma-tplink-interop:python-kasa-0.11.0.1-r3"
 
 // envVar turns the tests on.
 const envVar = "SIGMA_TPLINK_INTEROP"
