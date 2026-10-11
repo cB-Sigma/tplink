@@ -4,9 +4,11 @@
 // Package interop checks the tplink clients against a device that answers
 // from python-kasa's recorded fixtures and encrypts with python-kasa's own
 // transport code (peer/device.py), in a container: the legacy protocol,
-// KLAP v1 and v2, securePassthrough with both login versions, a strip's
-// children and the 20002 discovery. The tests need Docker and are skipped
-// unless SIGMA_TPLINK_INTEROP=1.
+// KLAP v1 and v2 over HTTP and HTTPS, securePassthrough with both login
+// versions, the camera, Kasa camera and plain HTTPS transports, a strip's
+// and hubs' children, the typed helpers against recorded answers, and the
+// 20002 discovery with its encrypted part. The tests need Docker and are
+// skipped unless SIGMA_TPLINK_INTEROP=1.
 package interop
 
 import (

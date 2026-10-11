@@ -28,14 +28,20 @@ method and field names, error codes, per-model colour-temperature ranges)
 were read from public descriptions, chiefly python-kasa
 (github.com/python-kasa/python-kasa, GPL-3.0). python-kasa is a
 GPL-licensed project: no code was taken from it, and nothing in this
-module is a translation of it; only facts were used. See PROVENANCE.md.
+module is a translation of it; only facts were used. Since v0.2.0 the
+fields of the Tapo energy history request were also read from
+fabiankachlock/tapo-api (MIT) and mihai-dinculescu/tapo (MIT), and the
+name of the Kasa countdown module confirmed in cloudkucooland/go-kasa
+(BSD-2-Clause), as facts only; no code was taken. See PROVENANCE.md.
 
 Credentials
 -----------
 
-The module contains no credential: no vendor setup account, no key and
-no account of the author or of any user. KLAPAuthsWith and AESLoginsWith
-take any further accounts to try from the caller.
+The module contains no credential: no vendor setup account, no camera
+default login, no key and no account of the author or of any user.
+KLAPAuthsWith and AESLoginsWith take any further accounts to try from the
+caller; the camera clients take the device's user and password from the
+caller.
 
 Interop tests (interop/, a separate test-only module)
 -----------------------------------------------------
@@ -44,7 +50,9 @@ interop/peer/Dockerfile installs python-kasa 0.11.0.1 (GPL-3.0) from
 PyPI and downloads the recorded device fixtures of its 0.11.0.1 tag into
 a python:3.12.10-slim image at test time; nothing of python-kasa is
 copied into this repository, and it is not linked with this module.
-interop/peer/device.py is our own script that calls python-kasa.
+interop/peer/device.py is our own script that calls python-kasa. The
+expected values in sslaes_test.go were computed by python-kasa's
+functions from made-up inputs (facts about its output, not its code).
 
 Dependencies
 ------------

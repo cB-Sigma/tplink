@@ -40,6 +40,26 @@ History:
   (SigmaM2M's adapter keeps supplying them). The interop module was
   added and run against python-kasa 0.11.0.1; it found no difference in
   the clients.
+- 2026-10-11, v0.2.0: multi.go, tapodevice.go, kasadevice.go, sslaes.go
+  and linkie.go were written for this module, and tdp.go gained the
+  decryption of the answer's encrypted part. Facts were read from
+  python-kasa 0.11.0.1 (installed in the interop image): its
+  protocols/smartprotocol.py and smartcamprotocol.py (batching, the
+  errors that end batching, paging), iot/ and smart/ device and module
+  files (module and method names, parameters, rule fields, statistics
+  fields, dimmer methods, light-strip service, Wi-Fi and set-up
+  requests, firmware update states, component names) and its
+  transports/sslaestransport.py, ssltransport.py and linkietransport.py
+  (the HTTPS logins, hashes, key derivation, request tags, the Kasa camera
+  form field). Tapo energy history (get_energy_data) is not in
+  python-kasa: its request fields come from fabiankachlock/tapo-api
+  v1.4.0 (MIT, pkg/api/request/energy_data.go) and its answer fields from
+  mihai-dinculescu/tapo (MIT, tapo/src/responses/energy_data_result.rs),
+  facts only. That count_down is the countdown module's name on devices
+  was confirmed in cloudkucooland/go-kasa (BSD-2-Clause), facts only. No
+  code, effect table or default credential was taken from any of them.
+  Running the new interop tests found that a Kasa camera nests its
+  sysinfo once more, which the helpers now read.
 
 ## Sources
 
@@ -51,6 +71,11 @@ History:
 | Discovery probe (tdp.go) | none published | python-kasa (GPL-3.0) kasa/discover.py: the 16-byte header (version 2, op code 1, flags 0x11, serial, CRC-32 seeded with 0x5A6B7C8D), the rsa_key payload, the answer's fields |
 | Tapo requests and children (smart.go) | none published | python-kasa (GPL-3.0) kasa/protocols/smartprotocol.py: get_child_device_list paging by start_index and sum, control_child with requestData and responseData |
 | Colour-temperature ranges (kelvin.go) | none published | python-kasa (GPL-3.0) kasa/iot/iotbulb.py: the per-model Kasa ranges; colortemperature module: Tapo color_temp_range |
+| Batching and components (multi.go) | none published | python-kasa (GPL-3.0) kasa/protocols/smartprotocol.py: multipleRequest shape, answers keyed by method, missing answers re-asked, batch size 5, start_index and sum paging; component_nego and get_child_device_component_list shapes |
+| Tapo helpers (tapodevice.go) | none published | python-kasa (GPL-3.0) kasa/smart/smartdevice.py and kasa/smart/modules/*.py: method names and parameters (energy, firmware, auto-off, LED, transitions, presets, light effects, Wi-Fi, set_qs_info, reboot, reset); fixtures for answer fields; tapo-api v1.4.0 (MIT) and the tapo crate (MIT): get_energy_data fields |
+| Kasa helpers (kasadevice.go) | none published | python-kasa (GPL-3.0) kasa/iot/*.py and kasa/iot/modules/*.py: module names per device type, statistics and rule methods and fields, dimmer methods, light-strip service and effect method, cloud and Wi-Fi methods; go-kasa (BSD-2-Clause): the count_down module name |
+| HTTPS transports (sslaes.go, linkie.go) | none published | python-kasa (GPL-3.0) kasa/transports/sslaestransport.py, ssltransport.py, linkietransport.py, klaptransport.py and kasa/protocols/smartcamprotocol.py: login steps, hashes, key and tag derivation, error codes, paths and ports, the Kasa camera form field |
+| Discovery decryption (tdp.go) | none published | python-kasa (GPL-3.0) kasa/discover.py and kasa/transports/aestransport.py: encrypt_info fields, RSA-OAEP with SHA-1, the AES-128-CBC data; the encrypt_type list |
 | Interop peer (interop/peer) | our own script and Dockerfile | python-kasa 0.11.0.1's transport classes and recorded fixtures, at test time |
 
 No specification or vendor text is reproduced.
@@ -69,6 +94,10 @@ match to interoperate:
   (klap.go).
 - The securePassthrough error codes in aes.go and the "unsupported"
   codes in `IsUnsupported` (smart.go).
+- `SSLAESConfirm`, `SSLAESDigest`, `SSLAESKeys` and `SSLAESTag` in
+  sslaes.go: the order of the strings each hash takes.
+- The module and method names and parameter fields in kasadevice.go and
+  tapodevice.go.
 
 The project owner decided on 2026-10-06 that no line-by-line comparison
 with python-kasa is needed, the facts-only rule and these notes being the
@@ -83,6 +112,8 @@ record.
 | proto_test.go TestTapoProbeAndAnswer | a probe built by TapoProbe and checked with Go's CRC-32; the answer JSON is made up in the shape of a device's answer |
 | proto_test.go TestKelvinRanges | the kelvin.go table |
 | proto_test.go TestCredentialOrder | the order of the auth hashes and logins tried |
+| devices_test.go | fakes written for the tests; the expected requests follow the facts above |
+| sslaes_test.go TestSSLAESVectors | values printed by python-kasa 0.11.0.1's SslAesTransport functions in the interop image for made-up inputs (the password "demo-password" and two fixed nonces) |
 | interop/ | python-kasa 0.11.0.1's code and fixtures, at test time |
 
 All accounts, MAC addresses, device IDs and addresses are made-up demo
