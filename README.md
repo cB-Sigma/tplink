@@ -1,18 +1,20 @@
 # tplink
 
-Clients for the local protocols of TP-Link Kasa and Tapo smart-home devices in pure Go: the Kasa legacy protocol, KLAP v1 and v2 over HTTP and HTTPS, securePassthrough, the camera and hub HTTPS transports and the 20002 discovery, with typed helpers for plugs, strips, dimmers, bulbs, light strips, hubs, cameras and robot vacuums; not affiliated with TP-Link.
+Clients for the local protocols of TP-Link Kasa and Tapo smart-home devices in pure Go: the Kasa legacy protocol, KLAP v1 and v2 over HTTP and HTTPS, securePassthrough, the TPAP login of newer firmware, the camera and hub HTTPS transports and the 20002 discovery, with typed helpers for plugs, strips, dimmers, bulbs, light strips, hubs, cameras and robot vacuums; not affiliated with TP-Link.
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/cB-Sigma/tplink.svg)](https://pkg.go.dev/github.com/cB-Sigma/tplink) [![test](https://github.com/cB-Sigma/tplink/actions/workflows/test.yml/badge.svg)](https://github.com/cB-Sigma/tplink/actions/workflows/test.yml) [![Licence: Apache-2.0](https://img.shields.io/badge/licence-Apache--2.0-blue.svg)](LICENSE) [![Go](https://img.shields.io/badge/go-1.22-00ADD8.svg)](go.mod)
 
 It talks to devices on the LAN: the Kasa legacy protocol on port 9999
 (TCP requests and UDP discovery), KLAP v1 and v2 over HTTP and HTTPS, the
-older Tapo securePassthrough transport, the HTTPS transport of Tapo
-cameras, doorbells and the H200 hub, the Kasa camera transport, the plain
-HTTPS transport of older robot vacuum firmware, Tapo hubs and power
-strips with their children, and the UDP 20002 discovery probe. Typed
-helpers cover what the devices do beyond switching. KLAP,
-securePassthrough and camera devices need the owner's account (cameras:
-the device's local user), but no cloud connection. Standard library and
+older Tapo securePassthrough transport, the TPAP login that newer Tapo
+firmware and cameras use when the app's third-party compatibility option
+is off (SPAKE2+ and AES-128-CCM), the HTTPS transport of Tapo cameras,
+doorbells and the H200 hub, the Kasa camera transport, the plain HTTPS
+transport of older robot vacuum firmware, Tapo hubs and power strips with
+their children, and the UDP 20002 discovery probe. Typed helpers cover
+what the devices do beyond switching. KLAP, securePassthrough, TPAP and
+camera devices need the owner's account (cameras: the device's local
+user), but no cloud connection. Standard library and
 [lanbcast](https://github.com/cB-Sigma/lanbcast) only, no cgo. It was
 written for SigmaM2M, a oneM2M platform, whose TP-Link adapter is built
 on it.
@@ -37,7 +39,8 @@ on it.
 | Camera helpers (`TapoCamera`, for a camera or doorbell, or a camera behind an H200 hub): information with battery, name, components, pan and tilt (`Move`, `MoveStep`, `Calibrate`), saved positions, privacy (lens mask), status light, ten detection settings (motion, person, pet, vehicle, baby cry, bark, meow, glass break, tamper, line crossing), last alarm, siren, alarm on detection and manual alarm, night vision and day/night mode, clock and time zone, SD cards and formatting, recording days and clips list, connection, Wi-Fi scan, reboot; the single request form (`CamSingle`) | yes, since v0.3.0 |
 | Robot vacuum helpers (`TapoVacuum`, on any transport): status (state, errors, battery, progress, suction, water, mode), start, rooms, pause, resume, return to dock, suction, water level, pass count, consumables and their reset, clean records, maps and rooms, mop, dock emptying, volume and locate, carpet boost, area unit | yes, since v0.3.0 |
 | Colour-temperature ranges | Kasa by model table; Tapo from get_device_info |
-| Changing Tapo away rules, the TPAP login, local Kasa firmware flashing, camera video, the cloud API | no; see "Not yet" |
+| The TPAP login of newer firmware (`TPAPClient`): asking a device whether it is in TPAP mode (`TPAPDiscover`) or reading it from the 20002 answer (`TapoFound.TPAP`, protocol `tpap`), SPAKE2+ (RFC 9383, P-256) with the account password, the device's proof checked, AES-128-CCM requests numbered by sequence, sessions renewed when the device ends them; plugs, bulbs, hubs and strips, and cameras over HTTPS (`Camera`, `TPAPCameraInfo`); wrong password (`ErrTPAPAuth`), a locked device (`ErrTPAPLocked`) and a device that cannot prove the password (`ErrTPAPDeviceProof`) told apart | yes, since v0.4.0: cipher suite 1, aes_128_ccm, passcode type 2 (account password) with password_shadow 2 or a camera's MD5; other variants in "Not yet" |
+| Changing Tapo away rules, local Kasa firmware flashing, camera video, the cloud API | no; see "Not yet" |
 
 ## Choosing a Go TP-Link library
 
@@ -55,7 +58,7 @@ KLAP and securePassthrough only, and is not shown.
 | KLAP v2 (Tapo) | yes, HTTP and HTTPS | yes | yes | no | yes, HTTP and HTTPS | yes |
 | KLAP v1 (Kasa on newer firmware) | yes | no | no | no | yes | no |
 | securePassthrough (older Tapo firmware) | yes, login v1 and v2 | no | no | no | yes | no |
-| TPAP login (newest firmware) | no (see "Not yet") | no | no | no | no; an open pull request (#1592) | yes |
+| TPAP login (newest firmware) | yes, since v0.4.0: account password, suite 1, AES-128-CCM | no | no | no | no; an open pull request (#1592) with more variants | yes, the same variants |
 | Cameras, doorbells, H200 hub (HTTPS transport) | yes, with typed helpers (no video) | no | no | no | yes, with camera modules and stream URLs | yes, pan and tilt, presets, recordings, snapshots, hub children |
 | Camera detection settings, siren, night vision, SD card | yes | no | no | no | detections, siren, LED, privacy; no night vision or SD card | no |
 | Robot vacuums | yes, typed helpers | no | no | no | yes, with device modules | no |
@@ -80,9 +83,11 @@ test against. Pick tapo-api if you prefer its per-model Tapo types and
 need nothing but KLAP v2 devices, and go-kasa for Kasa legacy devices
 with its command-line tool. Outside Go, python-kasa is still ahead in
 built-in light effect definitions, camera stream URLs and the number of
-firmware versions recorded from real devices, and the tapo crate in the
-TPAP login of the newest firmware and camera snapshots and recordings
-download.
+firmware versions recorded from real devices, and the tapo crate in
+camera snapshots and recordings download and in TPAP having been run
+against real devices. python-kasa's open TPAP pull request (#1592)
+describes more TPAP variants (the default passcode, more suites, the
+device certificate proof) than this module or the tapo crate implement.
 
 ## Install
 
@@ -117,8 +122,19 @@ id, _ := kasa.AddRule(ctx, tplink.KasaCountdown, tplink.KasaRule{Name: "off", En
 ```
 
 Use `TapoFound.Protocol()` and `TapoFound.HTTPS` to choose between
-`KLAPClient`, `AESClient` and `SSLAESClient`, and `TapoFound.BaseURL()`
-for the URL. `Example` and `ExampleKasaRequest` in example_test.go show
+`KLAPClient`, `AESClient`, `SSLAESClient` and `TPAPClient`, and
+`TapoFound.BaseURL()` for the URL. A device found by its address that
+refuses KLAP may be in TPAP mode; ask it:
+
+```go
+if info, _ := tplink.TPAPDiscover(ctx, hc, "http://"+host); info != nil {
+	c := &tplink.TPAPClient{Base: info.BaseURL(host), Password: password, HTTP: hc}
+	info, err := c.Call(ctx, "get_device_info", nil)
+}
+```
+
+TPAP logs in with the account password only (the login names the
+device's fixed local user, not the email). `Example` and `ExampleKasaRequest` in example_test.go show
 the whole flow (they need devices, so they are not run); `ExampleEncrypt`
 runs. [tplink-sim](https://github.com/cB-Sigma/tplink-sim) runs them,
 and every helper, against simulated devices.
@@ -129,7 +145,7 @@ API reference: https://pkg.go.dev/github.com/cB-Sigma/tplink
 
 | Package | What it does |
 |---|---|
-| `tplink` (module root) | Kasa: `KasaRequest`, `KasaDiscover`, `Encrypt`/`Decrypt`/`Frame`/`ReadFrame`, `KasaError`, `KasaConn`, `KasaCaller`, `KasaDevice` (`NewKasaDevice`, `Query`, `Emeter`, `EmeterDays`, `EmeterMonths`, `RuntimeDays`, `Rules`, `AddRule`, `EditRule`, `DimTo`, `SetLight`, `SetLightingEffect`, `WifiJoin`, ...), `KasaRule`, `KasaModuleError`, `IsKasaUnsupported`. KLAP: `KLAPClient` (`Call`, `KasaCall`, `Send`, `Handshake`, `Matched`, `BadSignatures`), `KLAPAuths`, `KLAPAuthsWith`, `Credential`, `AuthHash`, `AuthHashV1`, `NewSession`, `KLAPHTTPSPort`, `InsecureHTTP`. securePassthrough: `AESClient`, `AESLogins`, `AESLoginsWith`. Cameras and H200: `SSLAESClient`, `CamGet`, `CamDeviceInfo`, `CamChildList`, `CamControlChild`, `SSLAESConfirm`, `SSLAESDigest`, `SSLAESKeys`, `SSLAESTag`. Kasa cameras and robot vacuums: `LinkieClient`, `SSLClient`. Tapo: `SmartCaller`, `MultiCall`, `MultiCallChild`, `SmartList`, `Components`, `ChildComponents`, `ChildList`, `ControlChild`, `TapoDevice` (`Info`, `SetLight`, `EnergyData`, `Rules`, `ScheduleRules`, `AddScheduleRule`, `EditScheduleRule`, `RemoveScheduleRules`, `CountdownRules`, `AddCountdown`, `ReplaceCountdown`, `RemoveCountdowns`, `LatestFirmware`, `StartFirmwareUpdate`, `WifiJoin`, `Children`, `TriggerLogs`, ...), `TapoScheduleRule`, `ParseTapoScheduleRule`, `TapoCountdownRule`, `SmartError`, `IsUnsupported`. Cameras: `TapoCamera` (`Info`, `Move`, `Presets`, `GotoPreset`, `SetPrivacy`, `SetLED`, `Detection`, `SetDetection`, `Siren`, `SoundSiren`, `SetAlert`, `ManualAlarm`, `SetNightVision`, `Time`, `SetTimezone`, `SDCards`, `RecordingDays`, `Recordings`, `Reboot`, ...), `CamSingle`, `CamInfo`, `CamDetectionKind`, `ErrNoSingleRequests`. Robot vacuums: `TapoVacuum` (`Status`, `Start`, `CleanRooms`, `Pause`, `Resume`, `ReturnHome`, `SetSuction`, `SetWaterLevel`, `Consumables`, `CleanRecords`, `Maps`, `Rooms`, `DustCollection`, `EmptyDustbin`, `Volume`, `Locate`, ...), `VacuumStatus`. Discovery: `TapoDiscover`, `TapoProbe`, `CheckTapoProbe`, `ParseTapoAnswer`, `DecryptTapoAnswer`, `SealTapoDiscovery`, `TapoFound.BaseURL`. Kelvin ranges: `KasaKelvinRange`, `TapoKelvinRange` |
+| `tplink` (module root) | Kasa: `KasaRequest`, `KasaDiscover`, `Encrypt`/`Decrypt`/`Frame`/`ReadFrame`, `KasaError`, `KasaConn`, `KasaCaller`, `KasaDevice` (`NewKasaDevice`, `Query`, `Emeter`, `EmeterDays`, `EmeterMonths`, `RuntimeDays`, `Rules`, `AddRule`, `EditRule`, `DimTo`, `SetLight`, `SetLightingEffect`, `WifiJoin`, ...), `KasaRule`, `KasaModuleError`, `IsKasaUnsupported`. KLAP: `KLAPClient` (`Call`, `KasaCall`, `Send`, `Handshake`, `Matched`, `BadSignatures`), `KLAPAuths`, `KLAPAuthsWith`, `Credential`, `AuthHash`, `AuthHashV1`, `NewSession`, `KLAPHTTPSPort`, `InsecureHTTP`. securePassthrough: `AESClient`, `AESLogins`, `AESLoginsWith`. Cameras and H200: `SSLAESClient`, `CamGet`, `CamDeviceInfo`, `CamChildList`, `CamControlChild`, `SSLAESConfirm`, `SSLAESDigest`, `SSLAESKeys`, `SSLAESTag`. Kasa cameras and robot vacuums: `LinkieClient`, `SSLClient`. TPAP: `TPAPClient` (`Call`, `Send`, `Handshake`), `TPAPDiscover`, `TPAPInfo` (`BaseURL`, `PasscodeType`), `ParseTPAPInfo`, `TPAPCameraInfo`, `TPAPPasscode`, `TPAPPasscodeSHA1`, `TPAPVerifier` and `TPAPCipher` (the device side, for simulators), `ErrTPAPAuth`, `ErrTPAPLocked`, `ErrTPAPDeviceProof`, `ErrTPAPUnsupported`. Tapo: `SmartCaller`, `MultiCall`, `MultiCallChild`, `SmartList`, `Components`, `ChildComponents`, `ChildList`, `ControlChild`, `TapoDevice` (`Info`, `SetLight`, `EnergyData`, `Rules`, `ScheduleRules`, `AddScheduleRule`, `EditScheduleRule`, `RemoveScheduleRules`, `CountdownRules`, `AddCountdown`, `ReplaceCountdown`, `RemoveCountdowns`, `LatestFirmware`, `StartFirmwareUpdate`, `WifiJoin`, `Children`, `TriggerLogs`, ...), `TapoScheduleRule`, `ParseTapoScheduleRule`, `TapoCountdownRule`, `SmartError`, `IsUnsupported`. Cameras: `TapoCamera` (`Info`, `Move`, `Presets`, `GotoPreset`, `SetPrivacy`, `SetLED`, `Detection`, `SetDetection`, `Siren`, `SoundSiren`, `SetAlert`, `ManualAlarm`, `SetNightVision`, `Time`, `SetTimezone`, `SDCards`, `RecordingDays`, `Recordings`, `Reboot`, ...), `CamSingle`, `CamInfo`, `CamDetectionKind`, `ErrNoSingleRequests`. Robot vacuums: `TapoVacuum` (`Status`, `Start`, `CleanRooms`, `Pause`, `Resume`, `ReturnHome`, `SetSuction`, `SetWaterLevel`, `Consumables`, `CleanRecords`, `Maps`, `Rooms`, `DustCollection`, `EmptyDustbin`, `Volume`, `Locate`, ...), `VacuumStatus`. Discovery: `TapoDiscover`, `TapoProbe`, `CheckTapoProbe`, `ParseTapoAnswer`, `DecryptTapoAnswer`, `SealTapoDiscovery`, `TapoFound.BaseURL`. Kelvin ranges: `KasaKelvinRange`, `TapoKelvinRange` |
 | `interop` (nested module, tests only) | these clients against a device that answers from python-kasa's recorded fixtures with python-kasa's own crypto, in a container |
 
 Changes per version are in [CHANGELOG.md](CHANGELOG.md).
@@ -236,6 +252,20 @@ from PyPI and the fixtures of its 0.11.0.1 tag) and are skipped unless
   checked against the tapo crate's client (below, in tplink-sim's
   interop: the tapo crate's Python bindings 0.11.1 and this module's
   client on one simulated plug, each reading what the other wrote).
+- Added in v0.4.0, 2026-10-12: TPAP. python-kasa has none to test
+  against (neither 0.11.0.1 nor master 38a3184; its pull request #1592 is
+  not merged), so:
+  - SPAKE2+ is checked against RFC 9383's P-256 / SHA-256 test vector on
+    both sides (shares, confirmations, shared key), and the passcode
+    forms, the PBKDF2 split into w0 and w1 and the session cipher against
+    the known answers in the tapo crate 0.11.1's unit tests
+    (`tpap_test.go`);
+  - the tapo crate's own client (Python bindings 0.11.1) logged in over
+    TPAP to tplink-sim's TPAP plug and camera, which are built on this
+    module's verifier and cipher, and read and switched them (in
+    tplink-sim's interop); with the vectors above, that ties this
+    client's side to tapo's.
+  - Not checked: a real device in TPAP mode.
 - Not yet: a real Kasa or Tapo device. No open-source network emulator
   of these devices was found; python-kasa tests with in-process fakes, so
   the device side here is a script on python-kasa's code.
@@ -245,7 +275,8 @@ from PyPI and the fixtures of its 0.11.0.1 tag) and are skipped unless
 | Item | Why |
 |---|---|
 | Changing Tapo away (antitheft) rules (reading them is supported) | no open-source client sends their write requests: checked python-kasa 0.11.0.1 and master (2026-10-09), the tapo crate 0.11.1, plugp100 6.0.1 and pytapo 3.4.26 on 2026-10-12; `Call` reaches the device's methods |
-| The TPAP login of the newest firmware | public descriptions now exist (the freeKC tapo-v4-protocol write-up, MIT; pytapo 3.4.26 for cameras, MIT; the tapo crate 0.11.1, MIT; plugp100 6.0.1; python-kasa's open pull request #1592), so it is for the next release. It was started for v0.3.0 and not finished in time; only the AES-CCM cipher it needs is in place (unexported, checked against RFC 3610's first vector) |
+| TPAP with the default passcode (passcode type 0), other passcode transforms (password_shadow 1, 3, 5 and others), cipher suites other than 1 and session ciphers other than AES-128-CCM | the tapo crate, which has been run against real devices, implements none of them; python-kasa's unmerged pull request #1592 describes some, untested against real devices as far as its tests show. A device listing the default passcode next to the account password is offered the account password |
+| TPAP's device certificate proof (dac) and TLS mode 2 with the vendor's CA | needs the vendor's root certificate, which this module does not ship; with TLS mode 2 the caller's `HTTP` client decides what it trusts |
 | Flashing Kasa legacy firmware locally (download and flash requests) | no open-source client we checked does it, a wrong request can leave a device unusable, and it needs real hardware to test; `FirmwareList` reads what the cloud offers |
 | Camera video, snapshots and recording download | streams belong outside this module; the clips are listed (`Recordings`) |
 | Typed helpers for Kasa camera modules beyond the sysinfo | the Kasa camera transport is supported (`LinkieClient`, `KasaDevice`); python-kasa, the only open client found for them, reads only their sysinfo and on state |

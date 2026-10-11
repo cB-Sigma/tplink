@@ -96,6 +96,32 @@ History:
   Running the new interop tests found that the simulator answered a
   camera's siren with the module level where recorded devices do not;
   the client reads both and the simulator was changed.
+- 2026-10-12, v0.4.0: tpap.go was written for this module. The
+  implementation follows the tapo crate 0.11.1 (mihai-dinculescu/tapo,
+  MIT), read at its main branch on 2026-10-12:
+  tapo/src/api/protocol/tpap_protocol.rs (the discover, pake_register and
+  pake_share messages and fields, the fixed user name's MD5, the tpap
+  object's tls, port and pake, the /stok=.../ds path, the 100000
+  iteration bound, the camera defaults), tpap_spake2p.rs (P-256 with the
+  RFC 9383 M and N, PBKDF2-HMAC-SHA256 of 80 bytes split into w0 and w1,
+  the context as SHA-256 of "PAKE V1" and both randoms, empty identities,
+  the passcode forms), tpap_cipher.rs (the HKDF salt and info labels of
+  the AES-128-CCM key and nonce, the nonce built from 8 bytes and the
+  sequence, the body layout), tapo_protocol.rs and
+  discovery/discovery_raw_result.rs (when a device is in TPAP mode, the
+  camera login order) and responses/tapo_response.rs (error codes -2101,
+  -2201, -2202, -2203, -2402, a camera's -40401 at pake_share). The MIT
+  licence would allow following its code; the Go code here is written
+  anew, its structure, names and error handling our own. SPAKE2+ itself
+  follows RFC 9383 (its P-256 transcript, key schedule and
+  confirmations), HKDF RFC 5869 and PBKDF2 RFC 8018. python-kasa's
+  unmerged pull request #1592 (GPL-3.0, head e708447,
+  kasa/transports/tpaptransport.py) was read for facts only, to confirm
+  the labels, the transcript and the message fields, and to list the
+  variants not implemented (other suites and ciphers, passcode
+  transforms, the default passcode, the dac proof); no code was taken.
+  python-kasa 0.11.0.1 and master (38a3184) have no TPAP. No vendor key,
+  certificate or default passcode is in the module.
 
 ## Sources
 
@@ -116,6 +142,7 @@ History:
 | Camera helpers (tapocamera.go) | none published | python-kasa (GPL-3.0) smartcam modules and fixtures; pytapo 3.4.26 (MIT); the tapo crate 0.11.1 (MIT) smart_cam requests and responses |
 | Robot vacuum helpers (vacuum.go) | none published | python-kasa (GPL-3.0) kasa/smart/modules clean, cleanrecords, consumables, dustbin, mop, speaker; RV30 and RV20 fixtures |
 | AES-CCM (ccm.go) | RFC 3610, NIST SP 800-38C | none |
+| TPAP (tpap.go) | RFC 9383 (SPAKE2+), RFC 5869 (HKDF), RFC 8018 (PBKDF2); the tapo crate 0.11.1 (MIT) for the TPAP messages, labels and parameters | python-kasa pull request #1592 (GPL-3.0) kasa/transports/tpaptransport.py: the same facts confirmed, the variants not implemented |
 | Interop peer (interop/peer) | our own script and Dockerfile | python-kasa 0.11.0.1's transport classes and recorded fixtures, at test time |
 
 No specification or vendor text is reproduced.
@@ -138,6 +165,10 @@ match to interoperate:
   sslaes.go: the order of the strings each hash takes.
 - The module and method names and parameter fields in kasadevice.go and
   tapodevice.go.
+- In tpap.go, the order of the login steps and the field names, the HKDF
+  labels of `NewTPAPCipher` and the transcript order of `spakeKeys`
+  follow the tapo crate (MIT) and RFC 9383 closely, because a client must
+  match them to log in.
 
 The project owner decided on 2026-10-06 that no line-by-line comparison
 with python-kasa is needed, the facts-only rule and these notes being the
@@ -156,6 +187,10 @@ record.
 | ccm_test.go TestCCMVector | RFC 3610 packet vector #1 |
 | taporules_test.go, tapocamera_test.go, vacuum_test.go | fakes; the expected request shapes follow the facts above |
 | sslaes_test.go TestSSLAESVectors | values printed by python-kasa 0.11.0.1's SslAesTransport functions in the interop image for made-up inputs (the password "demo-password" and two fixed nonces) |
+| tpap_test.go TestSPAKE2PlusRFC9383 | RFC 9383 appendix test vector for SPAKE2+-P256-SHA256-HKDF-SHA256-HMAC-SHA256 |
+| tpap_test.go TestTPAPPasscodeAndW, TestTPAPCipher | the known answers in the tapo crate 0.11.1's unit tests (MIT): the SHA-1 and MD5 passcodes of "hunter2", w0 and w1 for a fixed salt and 3000 iterations, a sealed get_device_info under a fixed key and sequence |
+| tpap_test.go TestTPAPInfo, TestTapoAnswerTPAP | tpap objects as the tapo crate's tests record them (an L930 in TPAP mode, a C220); the rest made up |
+| tpap_test.go TestTPAPClient, TestTPAPClientDeviceProof | a minimal fake device on this module's verifier |
 | interop/ | python-kasa 0.11.0.1's code and fixtures, at test time |
 
 All accounts, MAC addresses, device IDs and addresses are made-up demo

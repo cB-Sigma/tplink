@@ -3,6 +3,27 @@
 All notable changes to this module. Versions follow semantic versioning;
 before v1 the API may change in minor versions.
 
+## v0.4.0 (2026-10-12)
+
+Additions only; the v0.3.0 API is unchanged.
+
+- TPAP, the login of Tapo devices and cameras on newer firmware when the
+  app's third-party compatibility option is off: `TPAPClient` (a
+  `SmartCaller`: `Call`, `Send`, `Handshake`; `Camera` for cameras),
+  `TPAPDiscover` (asks a device whether it is in TPAP mode), `TPAPInfo`
+  with `BaseURL` and `PasscodeType`, `ParseTPAPInfo`, `TPAPCameraInfo`,
+  `TPAPPasscode`, `TPAPPasscodeSHA1`, and for simulators the device side,
+  `TPAPVerifier` and `TPAPCipher`. Errors `ErrTPAPAuth`, `ErrTPAPLocked`,
+  `ErrTPAPDeviceProof`, `ErrTPAPUnsupported`. SPAKE2+ (RFC 9383) on P-256
+  with SHA-256, HKDF and HMAC, PBKDF2-HMAC-SHA256, AES-128-CCM, all on the
+  standard library. Supported: cipher suite 1, aes_128_ccm, the account
+  password (passcode type 2) with password_shadow 2 or, for cameras, MD5.
+- Discovery: `TapoFound.TPAP` holds an answer's tpap object;
+  `Protocol()` returns "tpap" for a device in TPAP mode and `BaseURL()`
+  its TPAP URL. Answers without TPAP read as before.
+- Tests: RFC 9383's test vector, the tapo crate 0.11.1's known answers;
+  the tapo crate's client against tplink-sim's TPAP devices.
+
 ## v0.3.0 (2026-10-11)
 
 Additions only; the v0.2.0 API is unchanged.

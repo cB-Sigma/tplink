@@ -6,7 +6,9 @@
 // KasaDiscover), KLAP v1 and v2 over HTTP and HTTPS (KLAPClient, with
 // KLAPAuths to try the account and blank credentials, and KLAPAuthsWith
 // for more accounts the caller supplies), the older Tapo
-// securePassthrough transport (AESClient), the HTTPS transport of Tapo
+// securePassthrough transport (AESClient), the TPAP login of newer
+// firmware (TPAPClient, TPAPDiscover: SPAKE2+ and AES-128-CCM with the
+// account password), the HTTPS transport of Tapo
 // cameras, doorbells and the H200 hub (SSLAESClient), the Kasa camera
 // transport (LinkieClient), the plain HTTPS transport of older robot
 // vacuum firmware (SSLClient), the Tapo request family with batching
@@ -28,8 +30,8 @@
 // cleaning, suction and water, consumables, records, maps and rooms,
 // dustbin, volume).
 //
-// It needs the owner's TP-Link account for KLAP and securePassthrough
-// devices (cameras: the device's local user), and no cloud connection. It
+// It needs the owner's TP-Link account for KLAP, securePassthrough and
+// TPAP devices (cameras: the device's local user), and no cloud connection. It
 // ships no vendor setup account or default login.
 //
 // TP-Link does not publish these protocols; this package follows public

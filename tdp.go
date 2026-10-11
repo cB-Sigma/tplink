@@ -194,16 +194,26 @@ type TapoFound struct {
 	// Decrypted is the answer's encrypt_info decrypted (newer firmware), or
 	// nil. TapoDiscover fills it.
 	Decrypted map[string]any
+	// TPAP is the answer's tpap object: how a device that takes the TPAP
+	// login wants it (since v0.4.0). A camera announcing it may take its
+	// HTTPS login too.
+	TPAP *TPAPInfo
 }
 
-// Protocol is the row protocol the answer asks for: klap or aes ("" when
-// not told).
+// Protocol is the row protocol the answer asks for: klap, aes or, since
+// v0.4.0, tpap ("" when not told). A device in TPAP mode answers with
+// encrypt_type TPAP and a tpap object; use TPAPClient with
+// TPAP.BaseURL(Host).
 func (f TapoFound) Protocol() string {
 	switch strings.ToUpper(f.Encrypt) {
 	case "KLAP":
 		return "klap"
 	case "AES":
 		return "aes"
+	case "TPAP":
+		if f.TPAP != nil {
+			return "tpap"
+		}
 	}
 	return ""
 }
@@ -214,6 +224,9 @@ func (f TapoFound) Protocol() string {
 // the HTTPS transport of cameras and the H200 hub (SSLAESClient, port 443
 // when not told). Use InsecureHTTP for the https ones.
 func (f TapoFound) BaseURL() string {
+	if f.Protocol() == "tpap" {
+		return f.TPAP.BaseURL(f.Host)
+	}
 	port := f.HTTPPort
 	if !f.HTTPS {
 		if port == 0 || port == 80 {
@@ -277,6 +290,11 @@ func ParseTapoAnswer(b []byte) (TapoFound, error) {
 			if _, err := fmt.Sscan(str(x), &v); err == nil && v > f.LoginVersion {
 				f.LoginVersion = v
 			}
+		}
+	}
+	if t, ok := r["tpap"].(map[string]any); ok {
+		if info, err := ParseTPAPInfo(t); err == nil {
+			f.TPAP = &info
 		}
 	}
 	if f.Encrypt == "" && f.HTTPS && f.LoginVersion == 3 {

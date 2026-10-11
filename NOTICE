@@ -39,6 +39,15 @@ JurajNyiri/pytapo (MIT) and petretiandrea/plugp100 (GPL-3.0), as facts
 only; no code was taken. The AES-CCM cipher follows RFC 3610. See
 PROVENANCE.md.
 
+Since v0.4.0 the TPAP login (tpap.go) follows the TPAP description in
+mihai-dinculescu/tapo 0.11.1 (MIT; Copyright its authors): the login
+messages, labels and parameters. The Go code is written anew; no source
+file was copied or translated. SPAKE2+ follows RFC 9383, HKDF RFC 5869
+and PBKDF2 RFC 8018; the test vector in tpap_test.go is RFC 9383's, and
+the known answers next to it are values from the tapo crate's unit tests.
+python-kasa's unmerged TPAP pull request (#1592, GPL-3.0) was read for
+facts only.
+
 Credentials
 -----------
 
@@ -46,7 +55,10 @@ The module contains no credential: no vendor setup account, no camera
 default login, no key and no account of the author or of any user.
 KLAPAuthsWith and AESLoginsWith take any further accounts to try from the
 caller; the camera clients take the device's user and password from the
-caller.
+caller. TPAPClient takes the account password from the caller; the
+module holds no TPAP default passcode, vendor certificate or key (the
+fixed local user name the login sends, "admin", is a protocol constant,
+not a credential).
 
 Interop tests (interop/, a separate test-only module)
 -----------------------------------------------------
